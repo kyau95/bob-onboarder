@@ -27,6 +27,7 @@ dependencies = [
     "requests>=2.32.0",
     "python-multipart>=0.0.9",
     "pyyaml>=6.0",
+    "numpy>=1.26",
 ]
 
 [project.optional-dependencies]
