@@ -225,17 +225,32 @@ Track of completed phases, what was built, and the relevant files.
 
 ---
 
-## Phase 10 — Frontend UI ⬜
+## Phase 10 — Frontend UI ✅
 
 **Goal:** A minimal, focused UI for the graph and chat-driven workflow.
 
-### Planned Work
-- React Flow graph canvas (nodes colored by type, edges labeled by relationship)
-- Repository input form + status polling
-- Chat/Q&A sidebar panel
-- Impact analysis node highlighting
-- Evidence drawer (click edge → file + line + snippet)
-- Graph diff view (added = green, removed = red)
+### What Was Built
+
+| Area | Details |
+|------|---------|
+| Layout | Two-pane: 288 px left sidebar + full-height graph canvas |
+| Repo ingest | URL input + automatic analyze → graph/build pipeline with live status badge |
+| Repo list | Sidebar with status dots, selection, delete, and inline "Analyze →" action |
+| Graph canvas | React Flow canvas — custom nodes coloured by type (11 types), edges labelled by relationship type, minimap, controls, fit-view |
+| Evidence drawer | Click any edge → slide-in panel showing file + line + snippet for every evidence entry |
+| Impact panel | Enter a node label → calls `/impact`, highlights affected nodes on canvas (orange glow), lists direct / transitive / test files |
+| Node legend | Colour-coded legend strip at canvas bottom |
+| TypeScript | Zero errors; production build passes (`tsc -b && vite build`) |
+
+### Key Files
+- [`frontend/src/types.ts`](frontend/src/types.ts) — shared TypeScript types (mirrors backend Pydantic models)
+- [`frontend/src/api.ts`](frontend/src/api.ts) — thin API client (ingest, list, analyze, graph, impact)
+- [`frontend/src/useRepoPolling.ts`](frontend/src/useRepoPolling.ts) — polling hook (2 s interval, auto-stops at terminal status)
+- [`frontend/src/components/RepoIngestForm.tsx`](frontend/src/components/RepoIngestForm.tsx) — URL input + pipeline driver
+- [`frontend/src/components/GraphCanvas.tsx`](frontend/src/components/GraphCanvas.tsx) — React Flow canvas + evidence drawer
+- [`frontend/src/components/ImpactPanel.tsx`](frontend/src/components/ImpactPanel.tsx) — impact analysis + node highlighting
+- [`frontend/src/components/Sidebar.tsx`](frontend/src/components/Sidebar.tsx) — repo list with status badges
+- [`frontend/src/App.tsx`](frontend/src/App.tsx) — root layout
 
 ---
 
