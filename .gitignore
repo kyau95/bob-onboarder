@@ -127,3 +127,48 @@ repos_data/
 # pytest / ruff cache
 .ruff_cache/
 .pytest_cache/
+
+# ============================================
+# PROJECT-SPECIFIC: backend
+# ============================================
+
+# Python eggs / packaging artifacts
+*.egg-info/
+*.egg
+dist/
+build/
+
+# mypy / pyright type caches
+.mypy_cache/
+.pyright/
+
+# coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# ============================================
+# PROJECT-SPECIFIC: frontend
+# ============================================
+
+# Vite build output (also in frontend/.gitignore)
+frontend/dist/
+frontend/dist-ssr/
+
+# npm / pnpm lock artifacts not needed at root level
+frontend/.vite/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# ============================================
+# PROJECT-SPECIFIC: runtime / Docker
+# ============================================
+
+# Cloned repo data written by the backend at runtime
+repos_data/
+/tmp/onboarder_repos/
+
+# Docker override files with local secrets
+docker-compose.override.yml
