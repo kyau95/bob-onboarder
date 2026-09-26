@@ -1,0 +1,33 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Live reload during development
+      - ./backend:/app
+      # Shared volume for cloned repositories
+      - repos_data:/tmp/onboarder_repos
+    environment:
+      - REPOS_BASE_DIR=/tmp/onboarder_repos
+      - DEBUG=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - VITE_API_BASE_URL=http://backend:8000
+
+volumes:
+  repos_data:
