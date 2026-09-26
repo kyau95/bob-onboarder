@@ -26,6 +26,7 @@ dependencies = [
     # Utilities
     "requests>=2.32.0",
     "python-multipart>=0.0.9",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
