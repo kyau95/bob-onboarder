@@ -183,23 +183,45 @@ Track of completed phases, what was built, and the relevant files.
 
 ---
 
-## Phase 8 — Modify Capability (Agentic Code Change) ⬜
+## Phase 8 — Modify Capability (Agentic Code Change) ✅
 
 **Goal:** Bob implements a targeted change using its built-in agent tools.
 
-### Planned Work
-- Bob uses native file tools (read_file, apply_diff, write_file) scoped by Phase 7 output
-- No snapshot/revert infrastructure — out of scope
+### What Was Built
+
+| Area | Details |
+|------|---------|
+| SKILL.md Step 6 | Updated: drop pre-change snapshot step; Bob uses native file tools scoped by Phase 7 impact output |
+| SKILL.md Step 7 | Updated: simplified to just call `POST /repo/{id}/test`; graph diff removed from scope |
+
+### Key Files
+- [`.bob/skills/repository-intelligence/SKILL.md`](.bob/skills/repository-intelligence/SKILL.md) — Steps 6 & 7 updated
 
 ---
 
-## Phase 9 — Verify Capability (Validation + Re-analysis) ⬜
+## Phase 9 — Verify Capability (Validation) ✅
 
 **Goal:** Confirm a change didn't break anything.
 
-### Planned Work
-- `POST /repo/{repo_id}/test` — detect and invoke the repo's test command, return pass/fail
-- No graph diff or snapshot comparison — out of scope
+### What Was Built
+
+| Area | Details |
+|------|---------|
+| Model | `backend/app/models/test_run.py` — `TestRunResponse` (`passed`, `command`, `return_code`, `output`) |
+| API | `POST /repo/{repo_id}/test` — detect test command from facts / fallback heuristics, run with 5-min timeout, return pass/fail + last 4 000 chars of output |
+| Router | `backend/app/api/verify.py` — registered in `main.py` |
+| Tests | `backend/tests/test_verify.py` — 10 tests (10/10 passing): guards, pass, fail, truncation, timeout, fallback detection |
+
+### API Endpoints
+
+| Method | Path | Behaviour |
+|--------|------|-----------|
+| `POST` | `/repo/{repo_id}/test` | Detect + invoke test command; return `passed`, `command`, `return_code`, `output` |
+
+### Key Files
+- [`backend/app/models/test_run.py`](backend/app/models/test_run.py) — response model
+- [`backend/app/api/verify.py`](backend/app/api/verify.py) — verify router
+- [`backend/tests/test_verify.py`](backend/tests/test_verify.py) — 10 tests (10/10 passing)
 
 ---
 

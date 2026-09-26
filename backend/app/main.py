@@ -10,6 +10,7 @@ from app.api.repo import router as repo_router
 from app.api.analysis import router as analysis_router
 from app.api.graph import router as graph_router
 from app.api.query import router as query_router
+from app.api.verify import router as verify_router
 from app.services.repo_service import seed_known_repos
 
 
@@ -42,3 +43,4 @@ app.include_router(repo_router)
 app.include_router(analysis_router)
 app.include_router(graph_router)
 app.include_router(query_router)
+app.include_router(verify_router)
