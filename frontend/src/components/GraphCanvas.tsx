@@ -158,6 +158,7 @@ function EvidenceDrawer({ edge, onClose }: EvidenceDrawerProps) {
 
 interface Props {
   repoId: string
+  refreshKey?: number        // increment to force a re-fetch of the graph
   highlightedNodeIds?: Set<string>
 }
 
@@ -251,7 +252,7 @@ function layoutNodes(nodes: Node[]): Node[] {
   })
 }
 
-export function GraphCanvas({ repoId, highlightedNodeIds = new Set() }: Props) {
+export function GraphCanvas({ repoId, refreshKey = 0, highlightedNodeIds = new Set() }: Props) {
   const [arch, setArch] = useState<ArchitectureGraph | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -265,7 +266,7 @@ export function GraphCanvas({ repoId, highlightedNodeIds = new Set() }: Props) {
       .then(setArch)
       .catch(e => setError(e instanceof Error ? e.message : 'Failed to load graph'))
       .finally(() => setLoading(false))
-  }, [repoId])
+  }, [repoId, refreshKey])
 
   const { nodes, edges, edgeMap } = useMemo(() => {
     if (!arch) return { nodes: [], edges: [], edgeMap: new Map<string, GEdge>() }

@@ -1,10 +1,10 @@
-// Hook: poll a repo's status until it reaches a terminal state or errors.
+// Hook: poll a repo's status on a fixed interval.
+// Stops only on 'error' or when stopPolling() is called explicitly.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getRepo } from './api'
-import type { RepoStatus, RepoSummary } from './types'
+import type { RepoSummary } from './types'
 
-const TERMINAL: RepoStatus[] = ['ready', 'analyzed', 'error']
 const POLL_MS = 2_000
 
 interface UseRepoPollingResult {
@@ -22,6 +22,7 @@ export function useRepoPolling(): UseRepoPollingResult {
 
   const stopPolling = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = null
     setPolling(false)
   }, [])
 
@@ -31,7 +32,7 @@ export function useRepoPolling(): UseRepoPollingResult {
     try {
       const data = await getRepo(id)
       setRepo(data)
-      if (TERMINAL.includes(data.status)) {
+      if (data.status === 'error') {
         stopPolling()
       } else {
         timerRef.current = setTimeout(tick, POLL_MS)
@@ -43,6 +44,8 @@ export function useRepoPolling(): UseRepoPollingResult {
 
   const startPolling = useCallback(
     (repoId: string) => {
+      // Clear any existing timer before starting a new one
+      if (timerRef.current) clearTimeout(timerRef.current)
       repoIdRef.current = repoId
       setPolling(true)
       timerRef.current = setTimeout(tick, POLL_MS)

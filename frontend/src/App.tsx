@@ -6,16 +6,20 @@ import { Sidebar } from './components/Sidebar'
 
 export default function App() {
   const [selectedRepoId, setSelectedRepoId] = useState<string | null>(null)
+  const [graphRefreshKey, setGraphRefreshKey] = useState(0)
   const [highlightedNodeIds, setHighlightedNodeIds] = useState<Set<string>>(new Set())
 
   function handleRepoReady(repoId: string) {
     setSelectedRepoId(repoId)
     setHighlightedNodeIds(new Set())
+    // Bump the key to force GraphCanvas to re-fetch even if repoId didn't change
+    setGraphRefreshKey(k => k + 1)
   }
 
   function handleSelect(repoId: string) {
     setSelectedRepoId(repoId)
     setHighlightedNodeIds(new Set())
+    setGraphRefreshKey(k => k + 1)
   }
 
   return (
@@ -56,6 +60,7 @@ export default function App() {
         {selectedRepoId ? (
           <GraphCanvas
             repoId={selectedRepoId}
+            refreshKey={graphRefreshKey}
             highlightedNodeIds={highlightedNodeIds}
           />
         ) : (

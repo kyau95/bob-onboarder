@@ -20,45 +20,50 @@ const STATUS_COLOR: Record<RepoStatus, string> = {
 
 export function RepoIngestForm({ onReady }: Props) {
   const [url, setUrl]         = useState('')
-  const [error, setError]     = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const { repo, polling, startPolling } = useRepoPolling()
+  const { repo, polling, startPolling, stopPolling } = useRepoPolling()
 
-  // Track which pipeline steps have already been triggered (per repo_id)
-  const pipelineRef = useRef<{ id: string; step: 'analyze' | 'build' | 'done' } | null>(null)
+  // Track which status we've already acted on to avoid double-firing
+  // key: `${repo_id}:${status}`
+  const actedRef = useRef(new Set<string>())
 
-  // Drive the analyze → graph/build pipeline as status advances
   useEffect(() => {
     if (!repo) return
 
     const { repo_id, status } = repo
-    const p = pipelineRef.current
+    const key = `${repo_id}:${status}`
+    if (actedRef.current.has(key)) return
 
-    if (status === 'ready' && (p === null || (p.id === repo_id && p.step === 'analyze'))) {
-      pipelineRef.current = { id: repo_id, step: 'build' }
-      void triggerAnalyze(repo_id).then(() => startPolling(repo_id))
-    } else if (status === 'analyzed' && p?.id === repo_id && p.step === 'build') {
-      pipelineRef.current = { id: repo_id, step: 'done' }
+    if (status === 'ready') {
+      actedRef.current.add(key)
+      void triggerAnalyze(repo_id)
+    } else if (status === 'analyzed') {
+      actedRef.current.add(key)
       void triggerGraphBuild(repo_id).then(() => {
-        setTimeout(() => onReady(repo_id), 1_500)
+        // Graph build is async on the backend — give it a moment, then stop
+        // polling and notify the parent so the canvas fetches the graph.
+        setTimeout(() => {
+          stopPolling()
+          onReady(repo_id)
+        }, 2_000)
       })
     }
-  }, [repo, startPolling, onReady])
+  }, [repo, stopPolling, onReady])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError(null)
+    setFormError(null)
     if (!url.trim()) return
 
     try {
       setLoading(true)
-      pipelineRef.current = null
+      actedRef.current.clear()
       const { repo_id } = await ingestRepo(url.trim())
-      pipelineRef.current = { id: repo_id, step: 'analyze' }
       startPolling(repo_id)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      setFormError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
       setLoading(false)
     }
@@ -84,8 +89,8 @@ export function RepoIngestForm({ onReady }: Props) {
         </button>
       </form>
 
-      {error && (
-        <p className="text-xs text-red-600">{error}</p>
+      {formError && (
+        <p className="text-xs text-red-600">{formError}</p>
       )}
 
       {repo && (
