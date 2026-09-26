@@ -1,7 +1,0 @@
-# Root-level requirements are superseded by backend/pyproject.toml.
-# Install backend dependencies with:
-#   cd backend && pip install ".[dev]"
-# Or run everything via Docker:
-#   docker compose up
-networkx
-requests
