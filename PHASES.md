@@ -124,14 +124,32 @@ Track of completed phases, what was built, and the relevant files.
 
 ---
 
-## Phase 4 — Bob Skill (Repository Intelligence) ⬜
+## Phase 4 — Bob Skill (Repository Intelligence) ✅
 
 **Goal:** Wire the Bob Skill to the backend API and define prompts for each capability.
 
-### Planned Work
-- Finalize `SKILL.md` instructions once backend endpoints are stable
-- Understand, Explore, Analyze, and Verify prompt sections
-- Backend query endpoints: `/paths`, `/impact`, `/summary`
+### What Was Built
+
+| Area | Details |
+|------|---------|
+| Query models | `backend/app/models/query.py` — `RepoSummaryResponse`, `PathsResponse` (with `PathHop`, `PathResult`), `ImpactResponse` (with `AffectedNode`) |
+| Query API | `backend/app/api/query.py` — three endpoints with DFS path-finding and BFS impact analysis |
+| SKILL.md | Updated with stable endpoint paths, response field docs, corrected snapshot URL, and an API quick-reference table |
+| Tests | `backend/tests/test_query.py` — 22 tests covering 404/409 guards, response structure, path finding, impact BFS, test-file detection |
+
+### API Endpoints
+
+| Method | Path | Capability |
+|--------|------|------------|
+| `GET` | `/repo/{id}/summary` | Understand — language breakdown, services, API endpoints, build commands, hotspots, entry points |
+| `GET` | `/repo/{id}/paths?from=X&to=Y` | Explore — DFS simple paths, bounded to 10 paths × 8 hops, case-insensitive node matching |
+| `GET` | `/repo/{id}/impact?node=X` | Analyze — BFS blast-radius: direct/transitive affected nodes + test files to run |
+
+### Key Files
+- [`backend/app/models/query.py`](backend/app/models/query.py) — response models
+- [`backend/app/api/query.py`](backend/app/api/query.py) — query router
+- [`.bob/skills/repository-intelligence/SKILL.md`](.bob/skills/repository-intelligence/SKILL.md) — updated skill
+- [`backend/tests/test_query.py`](backend/tests/test_query.py) — 22 tests (22/22 passing)
 
 ---
 
@@ -140,9 +158,8 @@ Track of completed phases, what was built, and the relevant files.
 **Goal:** Bob can answer "explain this codebase to me."
 
 ### Planned Work
-- `GET /repo/{repo_id}/summary` — language breakdown, components, APIs, test framework, build commands
-- Entry point detection
-- Bob-generated onboarding report
+- Wire `GET /repo/{repo_id}/summary` into the skill prompt (endpoint already exists from Phase 4)
+- Bob-generated onboarding summary in chat
 
 ---
 
@@ -151,9 +168,8 @@ Track of completed phases, what was built, and the relevant files.
 **Goal:** Bob can trace a request or data flow end-to-end through the graph.
 
 ### Planned Work
-- `GET /repo/{repo_id}/paths?from=X&to=Y` — all simple paths with edge evidence
-- Step-by-step flow narrative generation
-- Natural-language Q&A over the graph
+- Wire `GET /repo/{repo_id}/paths?from=X&to=Y` into the skill prompt (endpoint already exists from Phase 4)
+- Single-paragraph flow narrative from the returned path hops
 
 ---
 
@@ -162,10 +178,8 @@ Track of completed phases, what was built, and the relevant files.
 **Goal:** Given a proposed change, identify everything affected.
 
 ### Planned Work
-- `GET /repo/{repo_id}/impact?node=X` — BFS reachability, grouped by type
-- Test file association by naming convention + imports
-- Blast radius report with confidence scores
-- Diff-based impact (accept a `git diff`)
+- Wire `GET /repo/{repo_id}/impact?node=X` into the skill prompt (endpoint already exists from Phase 4)
+- Blast radius summary in chat (affected nodes + suggested test files)
 
 ---
 
@@ -174,22 +188,18 @@ Track of completed phases, what was built, and the relevant files.
 **Goal:** Bob implements a targeted change using its built-in agent tools.
 
 ### Planned Work
-- Change scoping via Phase 7 impact analysis
-- Pre-change snapshot: `POST /repo/{repo_id}/snapshot`
-- Bob uses native file tools (read_file, apply_diff, write_file)
-- Change log recording
+- Bob uses native file tools (read_file, apply_diff, write_file) scoped by Phase 7 output
+- No snapshot/revert infrastructure — out of scope
 
 ---
 
 ## Phase 9 — Verify Capability (Validation + Re-analysis) ⬜
 
-**Goal:** Run tests and regenerate the architecture model after a change.
+**Goal:** Confirm a change didn't break anything.
 
 ### Planned Work
-- `POST /repo/{repo_id}/test` — detect and invoke repo's test command, stream output
-- Automatic re-analysis trigger after tests pass
-- `GET /repo/{repo_id}/graph/diff?before=<snapshot_id>` — graph diff between snapshots
-- Verification report
+- `POST /repo/{repo_id}/test` — detect and invoke the repo's test command, return pass/fail
+- No graph diff or snapshot comparison — out of scope
 
 ---
 
