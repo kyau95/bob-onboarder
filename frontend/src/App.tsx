@@ -7,13 +7,25 @@ import { Sidebar } from './components/Sidebar'
 export default function App() {
   const [selectedRepoId, setSelectedRepoId] = useState<string | null>(null)
   const [graphRefreshKey, setGraphRefreshKey] = useState(0)
+  const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0)
   const [highlightedNodeIds, setHighlightedNodeIds] = useState<Set<string>>(new Set())
+
+  function refreshSidebar() {
+    setSidebarRefreshKey(k => k + 1)
+  }
 
   function handleRepoReady(repoId: string) {
     setSelectedRepoId(repoId)
     setHighlightedNodeIds(new Set())
     // Bump the key to force GraphCanvas to re-fetch even if repoId didn't change
     setGraphRefreshKey(k => k + 1)
+    // Reload sidebar so the completed repository shows analyzed / done
+    refreshSidebar()
+  }
+
+  function handleIngestStarted(repoId: string) {
+    setSelectedRepoId(repoId)
+    refreshSidebar()
   }
 
   function handleSelect(repoId: string) {
@@ -36,12 +48,20 @@ export default function App() {
 
         {/* Ingest form */}
         <div className="px-4 py-3 border-b border-gray-100">
-          <RepoIngestForm onReady={handleRepoReady} />
+          <RepoIngestForm
+            onReady={handleRepoReady}
+            onIngestStarted={handleIngestStarted}
+            onStatusChange={refreshSidebar}
+          />
         </div>
 
         {/* Repo list */}
         <div className="flex-1 min-h-0">
-          <Sidebar selectedId={selectedRepoId} onSelect={handleSelect} />
+          <Sidebar
+            selectedId={selectedRepoId}
+            refreshKey={sidebarRefreshKey}
+            onSelect={handleSelect}
+          />
         </div>
 
         {/* Impact panel (only when a repo is selected + graph loaded) */}

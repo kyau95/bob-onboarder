@@ -49,7 +49,8 @@ async def trigger_analysis(repo_id: str, background_tasks: BackgroundTasks) -> d
     repo.touch()
     repo_registry.update(repo)
 
-    background_tasks.add_task(_run_analysis_task, repo_id, Path(repo.local_path))
+    local_path = Path(repo.local_path) if repo.local_path else Path("/tmp/nonexistent")
+    background_tasks.add_task(_run_analysis_task, repo_id, local_path)
 
     return {
         "repo_id": repo_id,
@@ -61,6 +62,21 @@ async def trigger_analysis(repo_id: str, background_tasks: BackgroundTasks) -> d
 def _run_analysis_task(repo_id: str, repo_path: Path) -> None:
     """Background task: run analysis, store facts, update repo status."""
     try:
+        if not repo_path.exists():
+            from app.services.seed_data import is_seeded_repo, get_seeded_template_by_id
+            from app.core.graph_store import graph_store
+            if is_seeded_repo(repo_id):
+                facts, arch = get_seeded_template_by_id(repo_id)
+                _facts_store[repo_id] = facts
+                graph_store.set_graph(repo_id, arch)
+                repo = repo_service.get_repo(repo_id)
+                if repo:
+                    repo.status = RepoStatus.ANALYZED
+                    repo.touch()
+                    repo_registry.update(repo)
+                logger.info("Restored seeded analysis facts for %s", repo_id)
+                return
+
         facts = run_analysis(repo_id, repo_path)
         _facts_store[repo_id] = facts
 

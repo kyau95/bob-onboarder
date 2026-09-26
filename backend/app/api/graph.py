@@ -58,6 +58,15 @@ async def build_graph_endpoint(repo_id: str, background_tasks: BackgroundTasks) 
 def _build_graph_task(repo_id: str) -> None:
     """Background task: build graph, store it, update repo metadata."""
     try:
+        from app.services.seed_data import is_seeded_repo, get_seeded_template_by_id
+        if is_seeded_repo(repo_id):
+            facts, arch = get_seeded_template_by_id(repo_id)
+            _facts_store[repo_id] = facts
+            graph_store.set_graph(repo_id, arch)
+            logger.info("Restored prebuilt graph for %s: %d nodes, %d edges",
+                        repo_id, arch.node_count, arch.edge_count)
+            return
+
         facts = _facts_store.get(repo_id)
         if facts is None:
             logger.error("No facts found for %s during graph build", repo_id)

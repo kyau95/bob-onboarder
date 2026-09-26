@@ -15,10 +15,11 @@ const STATUS_DOT: Record<RepoStatus, string> = {
 
 interface Props {
   selectedId: string | null
+  refreshKey?: number
   onSelect: (repoId: string) => void
 }
 
-export function Sidebar({ selectedId, onSelect }: Props) {
+export function Sidebar({ selectedId, refreshKey = 0, onSelect }: Props) {
   const [repos, setRepos]     = useState<RepoSummary[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -34,7 +35,17 @@ export function Sidebar({ selectedId, onSelect }: Props) {
 
   useEffect(() => {
     void load()
-  }, [])
+  }, [refreshKey])
+
+  // Auto-poll if any repo is currently cloning or analyzing
+  useEffect(() => {
+    const hasActive = repos.some(r => r.status === 'cloning' || r.status === 'analyzing')
+    if (!hasActive) return
+    const timer = setTimeout(() => {
+      void load()
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [repos])
 
   async function handleAnalyze(repoId: string, e: React.MouseEvent) {
     e.stopPropagation()
@@ -85,7 +96,9 @@ export function Sidebar({ selectedId, onSelect }: Props) {
               <p className="text-sm font-medium text-gray-800 truncate">{repo.name}</p>
               <p className="text-xs text-gray-400 truncate">{repo.url}</p>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-gray-500">{repo.status}</span>
+                <span className={`text-xs ${repo.status === 'analyzed' ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
+                  {repo.status === 'analyzed' ? '✓ analyzed' : repo.status}
+                </span>
 
                 {repo.status === 'ready' && (
                   <button

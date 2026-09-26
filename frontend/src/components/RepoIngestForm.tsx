@@ -7,6 +7,8 @@ import type { RepoStatus } from '../types'
 
 interface Props {
   onReady: (repoId: string) => void
+  onIngestStarted?: (repoId: string) => void
+  onStatusChange?: (repoId: string, status: RepoStatus) => void
 }
 
 const STATUS_COLOR: Record<RepoStatus, string> = {
@@ -18,7 +20,7 @@ const STATUS_COLOR: Record<RepoStatus, string> = {
   error:     'bg-red-100 text-red-700',
 }
 
-export function RepoIngestForm({ onReady }: Props) {
+export function RepoIngestForm({ onReady, onIngestStarted, onStatusChange }: Props) {
   const [url, setUrl]         = useState('')
   const [formError, setFormError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -33,6 +35,8 @@ export function RepoIngestForm({ onReady }: Props) {
     if (!repo) return
 
     const { repo_id, status } = repo
+    onStatusChange?.(repo_id, status)
+
     const key = `${repo_id}:${status}`
     if (actedRef.current.has(key)) return
 
@@ -50,7 +54,7 @@ export function RepoIngestForm({ onReady }: Props) {
         }, 2_000)
       })
     }
-  }, [repo, stopPolling, onReady])
+  }, [repo, stopPolling, onReady, onStatusChange])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -61,7 +65,9 @@ export function RepoIngestForm({ onReady }: Props) {
       setLoading(true)
       actedRef.current.clear()
       const { repo_id } = await ingestRepo(url.trim())
+      onIngestStarted?.(repo_id)
       startPolling(repo_id)
+      setUrl('')
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Unknown error')
     } finally {

@@ -179,10 +179,15 @@ _PURPOSE_MAP: dict[str, AnalysisPurpose] = {
 
 def seed_known_repos() -> list[RepoMeta]:
     """
-    Register the three known repos in PENDING state (no clone).
-    Called once at application startup so the UI shows them immediately.
+    Register the three known repos with prebuilt architecture graphs.
+    Called once at application startup so the UI shows them immediately
+    with prebuilt graphs ready to be viewed and explored in the demo.
     Already-registered URLs are skipped to avoid duplicates on hot-reload.
     """
+    from app.core.graph_store import graph_store
+    from app.api.analysis import _facts_store
+    from app.services.seed_data import URL_TO_REPO_ID, get_seeded_template
+
     existing_urls = {r.url for r in repo_registry.list()}
     results: list[RepoMeta] = []
 
@@ -190,7 +195,7 @@ def seed_known_repos() -> list[RepoMeta]:
         if entry["url"] in existing_urls:
             continue
 
-        repo_id = str(uuid.uuid4())
+        repo_id = URL_TO_REPO_ID.get(entry["url"], str(uuid.uuid4()))
         repo = RepoMeta(
             repo_id=repo_id,
             url=entry["url"],
@@ -199,10 +204,18 @@ def seed_known_repos() -> list[RepoMeta]:
             purpose=_PURPOSE_MAP[entry["purpose"]],
             description=entry.get("description"),
             analysis_targets=entry.get("analysis_targets", []),
-            status=RepoStatus.PENDING,
+            status=RepoStatus.ANALYZED,
+            graph_path=f"in-memory:{repo_id}",
+            cloned_at=datetime.now(timezone.utc),
         )
         repo_registry.add(repo)
+
+        # Prebuild and store the architecture graph and raw facts
+        facts, arch = get_seeded_template(entry["url"], repo_id)
+        _facts_store[repo_id] = facts
+        graph_store.set_graph(repo_id, arch)
+
         results.append(repo)
-        logger.info("Seeded known repo: %s (%s)", repo.name, repo.repo_id)
+        logger.info("Seeded and prebuilt known repo: %s (%s)", repo.name, repo.repo_id)
 
     return results
