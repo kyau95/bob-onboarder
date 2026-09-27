@@ -1,0 +1,6 @@
+# Streamlit UI
+streamlit>=1.39
+plotly>=5.24
+
+# Reuse the project's existing backend package and dependency definitions.
+-e ./backend
